@@ -140,12 +140,12 @@ if(a.m<=0)reload()}
 // game flow
 function startWave(){if(NET.on&&!NET.host)return;try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();ac.resume()}catch(e){}S.wave++;S.queue=Math.round((6+S.wave*3)*(1+.7*others().length));S.sp=0;S.state='play';$('ov').style.display='none';buildW();msg('WAVE '+S.wave);try{R.domElement.requestPointerLock()}catch(e){}}
 function msg(t){$('msg').textContent=t;setTimeout(()=>$('msg').textContent='',2200)}
-function shop(title){save();S.state='shop';md=0;try{document.exitPointerLock()}catch(e){}const o=$('ov');o.style.display='flex';
+function shop(title){if(BANS[MYID]){banScreen();return}save();S.state='shop';md=0;try{document.exitPointerLock()}catch(e){}const o=$('ov');o.style.display='flex';
 let h=`<h1>DEAD HOUR</h1><div style="font-size:22px;margin-bottom:8px">${title}</div><div style="color:#e6c34a;font-size:24px;margin-bottom:8px">Points: ${S.pts}</div>`;
 h+=mpPanel();ORD.forEach(i=>{const w=WP[i],own=S.own[i],a=S.am[i];h+=`<div class="row"><span><b>${w.n}</b><br><small>DMG ${w.d}${w.pel>1?'x'+w.pel:''} · Mag ${w.mag} · ${own?`Ammo ${a.m}/${a.r}`:''}</small></span>`+
 (own?`<span><button onclick="ammo(${i})" ${S.pts<150||a.r>=w.res*2?'disabled':''}>Ammo +${w.res} (150)</button> <button onclick="eqs(${i})" ${S.cur==i?'disabled':''}>${S.cur==i?'Equipped':'Equip'}</button></span>`:`<button onclick="buy(${i})" ${S.pts<w.p?'disabled':''}>Buy (${w.p})</button>`)+'</div>'});
 h+=extraRows();h+=`<div class="row"><span><b>Medical Kit</b><br><small>Health ${Math.round(S.hp)}/100</small></span><button onclick="heal()" ${S.pts<300||S.hp>=100?'disabled':''}>Heal (300)</button></div>`;
-h+=`${NET.on&&!NET.host?'<div style="margin-top:14px;font-size:20px">Waiting for the host to start…</div>':'<button class="big" onclick="startWave()">'+(S.wave?'Start Wave '+(S.wave+1):(NET.on?'Start Co-op Game':'Begin — Wave 1'))+'</button>'}<small style="margin-top:10px">WASD move · Shift sprint · Mouse aim/shoot (hold to auto) · R reload · 1-9,0 pick owned guns · PvP toggle on the home screen · Headshots 2.5x · Touch: left stick moves, drag right side to aim, FIRE button</small>`;o.innerHTML=h}
+h+=`${NET.on&&!NET.host?'<div style="margin-top:14px;font-size:20px">Waiting for the host to start…</div>':'<button class="big" onclick="startWave()">'+(S.wave?'Start Wave '+(S.wave+1):(NET.on?'Start Co-op Game':'Begin — Wave 1'))+'</button>'}<small style="margin-top:10px">WASD move · Shift sprint · Mouse aim/shoot (hold to auto) · R reload · 1-9,0 pick owned guns · PvP toggle on the home screen · Headshots 2.5x · Touch: left stick moves, drag right side to aim, FIRE button</small><small style="margin:14px 0;cursor:pointer;text-decoration:underline" onclick="ownerLogin()">Owner</small>${adminArea()}`;o.innerHTML=h}
 window.buy=i=>{if(S.pts>=WP[i].p){S.pts-=WP[i].p;S.own[i]=1;S.cur=i;shop('Armory')}};
 window.eqs=i=>{S.cur=i;shop('Armory')};window.ammo=i=>{S.pts-=150;S.am[i].r+=WP[i].res;shop('Armory')};window.heal=()=>{S.pts-=300;S.hp=100;shop('Armory')};window.startWave=startWave;
 function over(){save();S.state='dead';try{document.exitPointerLock()}catch(e){}const o=$('ov');o.style.display='flex';o.innerHTML=`<h1>YOU DIED</h1><div style="font-size:22px">Reached wave ${S.wave} · ${S.kills} zombies killed<br><span style="color:#e6c34a">Your ${S.pts} points and weapons are kept.</span></div><button class="big" onclick="location.reload()">Back to Armory</button>`}
@@ -180,7 +180,7 @@ else{const p=Math.round((300+Math.random()*1200)/50)*50;S.pts+=p;m=p+' points'}
 shop('🎁 Chest: '+m)};
 tb('bz',()=>useBlast());
 // multiplayer (co-op, host-authoritative, via room presence)
-const NET={on:0,host:0,room:null,zid:0,kp:{},kx:{},lx:0,pd:{},lpd:{},tm:{},last:{},dm:{},zmap:{},pm:{},err:'',code:'',n:'',lk:0,hu:0,nh:0,q:0,t:0};
+const NET={ban:(()=>{try{return JSON.parse(localStorage.getItem('dh_bans')||'{}')}catch(e){return{}}})(),bl:[],ul:[],on:0,host:0,room:null,zid:0,kp:{},kx:{},lx:0,pd:{},lpd:{},tm:{},last:{},dm:{},zmap:{},pm:{},err:'',code:'',n:'',lk:0,hu:0,nh:0,q:0,t:0};
 // PeerJS transport: host-authoritative star network exposing the same small room API the game uses
 function peerJoin(code,host){return new Promise((res,rej)=>{
 const id='deadhour-'+code.toLowerCase(),P=new Peer(host?id:undefined),st={},mine={},conns={},cbs=[];let myId=null,stamp=0,conn=null,done=0;
@@ -196,18 +196,26 @@ else{conn=P.connect(id,{reliable:true});conn.on('open',()=>{done=1;res(room);con
 conn.on('data',m=>{if(m&&m.all){for(const k in m.all){if(k==myId)continue;const n=!st[k];st[k]={p:m.all[k],t:++stamp};if(n)fire([k],[])}for(const k in st)if(!(k in m.all)){delete st[k];fire([],[k])}}});
 conn.on('close',()=>{const l=Object.keys(st);for(const k of l)delete st[k];fire([],l)})}})})}
 const RM=window.Peer?{join:peerJoin}:null;
-const others=()=>NET.on?NET.room.peers().filter(p=>!p.sameTab&&p.kind=='viewer'):[];
+function banned(p){const u=p.presence.u;if(!u)return false;if(BANS[u])return true;if(NET.host)return !!NET.ban[u];const h=NET.room.peers().find(q=>q.presence.H);return !!(h&&h.presence.bn&&h.presence.bn.includes(u))}
+const others=()=>NET.on?NET.room.peers().filter(p=>!p.sameTab&&p.kind=='viewer'&&!banned(p)):[];
 const myPeer=()=>(NET.room.peers().find(p=>p.sameTab)||{}).peer;
 const TC=[0xf2f2f2,0xd32f2f,0x1e6fd9,0x2e9e45],TN=['White','Red','Blue','Green'],hex=c=>'#'+c.toString(16).padStart(6,'0');
 function teamOf(id){if(!NET.on)return 0;const t=NET.host?NET.tm:((NET.room.peers().find(p=>p.presence.H)||{presence:{}}).presence.tm||{});return(t[id]|0)%4}
 const myTeam=()=>NET.on?teamOf(myPeer()):0;
-function teamRows(){return NET.room.peers().filter(p=>p.kind=='viewer').map(p=>{const t=teamOf(p.peer),nm=String(p.presence.n||'…').replace(/[<>&"]/g,'')+(p.sameTab?' (you)':'');
+function teamRows(){return NET.room.peers().filter(p=>p.kind=='viewer'&&!banned(p)).map(p=>{const t=teamOf(p.peer),nm=String(p.presence.n||'…').replace(/[<>&"]/g,'')+(p.sameTab?' (you)':'');
 return `<div class="row"><span style="color:${hex(TC[t])}"><b>${nm}</b><br><small>Team ${TN[t]}</small></span><span>${TC.map((c,i)=>`<button style="background:${hex(c)};color:${i?'#fff':'#000'};opacity:${i==t?1:.35};padding:6px 9px;margin-left:3px;${NET.host?'':'pointer-events:none'}" onclick="setTeam('${p.peer}',${i})">${i==t?'✓ ':''}${TN[i]}</button>`).join('')}</span></div>`}).join('')}
 window.setTeam=(id,i)=>{if(!NET.host)return;NET.tm[id]=i;shop('Armory');netTick()};
+let MYID='';try{MYID=localStorage.getItem('dh_uid')||'';if(!MYID){MYID=Math.random().toString(36).slice(2,12)+Date.now().toString(36);localStorage.setItem('dh_uid',MYID)}}catch(e){MYID=Math.random().toString(36).slice(2,14)}
+// Owner permanent bans: edit BANNED here and/or bans.json next to this file ({"playerId":"name"})
+const BANNED={};
+const ADMIN_PASS='changeme';
+const BANS=Object.assign({},BANNED);
+function banScreen(){S.state='banned';md=0;try{document.exitPointerLock()}catch(e){}const o=$('ov');o.style.display='flex';o.innerHTML='<h1>BANNED</h1><div style="font-size:22px;max-width:520px;text-align:center">You have been permanently banned from this game by its creator.</div>'}
+try{fetch('bans.json?'+Date.now()).then(r=>r.ok?r.json():{}).then(j=>{if(Array.isArray(j))j=Object.fromEntries(j.map(u=>[u,'']));for(const k in j)BANS[k]=String(j[k]||'');if(BANS[MYID])banScreen()}).catch(()=>{})}catch(e){}
 let MYN='';try{MYN=localStorage.getItem('dh_name')||''}catch(e){}
 const r2=v=>Math.round(v*100)/100;
 function mpPanel(){let h=NET.err?`<div style="color:#e05a4f;margin:4px;max-width:90vw;text-align:center">${NET.err}</div>`:'';
-if(NET.on){const n=NET.room.peers().filter(p=>p.kind=='viewer').length;h+=`<div class="row"><span>Room code <b style="font-size:26px;letter-spacing:5px;color:#e6c34a">${NET.code}</b><br><small>${NET.host?'You are the host':'Joined a co-op game'} · ${n} player${n>1?'s':''}: ${NET.room.peers().filter(p=>p.kind=='viewer').map(p=>String(p.presence.n||'…').replace(/[<>&"]/g,'')).join(', ')}</small></span><button onclick="mpLeave('Armory')">Leave</button></div>`+(S.tmode?teamRows():'')}
+if(NET.on){const n=NET.room.peers().filter(p=>p.kind=='viewer'&&!banned(p)).length;h+=`<div class="row"><span>Room code <b style="font-size:26px;letter-spacing:5px;color:#e6c34a">${NET.code}</b><br><small>${NET.host?'You are the host':'Joined a co-op game'} · ${n} player${n>1?'s':''}: ${NET.room.peers().filter(p=>p.kind=='viewer'&&!banned(p)).map(p=>String(p.presence.n||'…').replace(/[<>&"]/g,'')).join(', ')}</small></span><button onclick="mpLeave('Armory')">Leave</button></div>`+(S.tmode?teamRows():'')+banArea()}
 else if(!S.wave)h+=`<div class="row"><span><b>Your name</b><br><small>Required for multiplayer</small></span><input id="nm" maxlength="14" placeholder="Name" value="${MYN}" style="width:140px;font:20px sans-serif;padding:6px"></div><div class="row"><span><b>Co-op Multiplayer</b><br><small>Host, then share the code</small></span><button onclick="mpStart(1)">Host game</button></div><div class="row"><input id="cd" maxlength="5" placeholder="CODE" style="width:110px;font:22px monospace;text-transform:uppercase;padding:6px"><button onclick="mpStart(0,$('cd').value)">Join with code</button></div>`;
 if(NET.on||!S.wave)h+=teamModeRow()+pvpRow();return h}
 async function mpStart(host,code){NET.err='';const nm=($('nm')?$('nm').value:MYN).replace(/[<>&"'`]/g,'').trim().slice(0,14);if(nm){MYN=nm;try{localStorage.setItem('dh_name',nm)}catch(e){}}else{NET.err='Enter your name before joining multiplayer.';return shop('Armory')}
@@ -218,6 +226,28 @@ try{NET.room=await RM.join(code,host)}catch(e){NET.err='Could not join ('+((e&&e
 Object.assign(NET,{on:1,host:!!host,code,n:MYN,kp:{},kx:{},lx:0,pd:{},lpd:{},tm:{},last:{},dm:{},zmap:{},pm:{},lk:0,hu:0,nh:0,q:0,t:0});
 NET.room.onPeers(c=>{if((c.joined.length||c.left.length)&&S.state=='shop')shop('Armory')});netTick();shop('Armory')}
 function mpLeave(m){try{NET.room&&NET.room.leave()}catch(e){}NET.on=0;NET.host=0;NET.room=null;for(const z of Z.concat(Z.dead||[]))sc.remove(z);Z.length=0;zm.length=0;Z.dead=[];for(const id in NET.pm)sc.remove(NET.pm[id]);NET.pm={};NET.zmap={};NET.dm={};S.queue=0;S.wave=0;shop(m||'Armory')}
+const esc2=t=>String(t||'').replace(/[^\w-]/g,'').slice(0,40);
+function adminArea(){if(S.af&&!S.admin)return `<div class="row" style="margin-top:8px"><input id="ap" type="password" placeholder="Owner passcode" style="width:160px;padding:6px"><button onclick="ownerCheck()">Unlock</button></div>${S.ae?'<small style="color:#e05a4f">'+S.ae+'</small>':''}`;
+if(!S.admin)return '';const ps=NET.on?NET.room.peers().filter(p=>!p.sameTab&&p.kind=='viewer'):[];NET.al=ps.map(p=>({u:p.presence.u,n:p.presence.n}));NET.au=Object.keys(BANS);
+const r=(n,sub,b)=>`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:8px"><span>${esc(n)}<br><small>${esc2(sub)}</small></span>${b}</div>`;
+return `<div class="row" style="flex-direction:column;align-items:stretch"><b>🔑 Owner: ban forever</b><small>Your ID: ${esc2(MYID)}</small>`
++(ps.length?ps.map((p,i)=>r(p.presence.n,p.presence.u||'no id yet',`<button onclick="adminBan(${i})" ${p.presence.u?'':'disabled'}>Ban forever</button>`)).join(''):'<small style="margin-top:6px">Join or host a room to see players here.</small>')
++`<small style="margin-top:12px">Ban list. Copy this whole text into bans.json in your GitHub repo to make it permanent for everyone:</small><textarea readonly id="bt" style="width:100%;height:110px;box-sizing:border-box;background:#111;color:#cfc;border:1px solid #555;margin-top:6px;font:12px monospace">${JSON.stringify(BANS,null,1).replace(/</g,'')}</textarea><div style="margin-top:6px"><button onclick="copyBans()">Copy</button> <button onclick="ownerLogin()">Lock owner panel</button></div>`
++NET.au.map((u,i)=>r(BANS[u],u,`<button onclick="adminUnban(${i})">Remove</button>`)).join('')+'</div>'}
+window.ownerLogin=()=>{if(S.admin){S.admin=0;S.af=0}else S.af=1;shop('Armory')};
+window.ownerCheck=()=>{if($('ap').value===ADMIN_PASS){S.admin=1;S.af=0;S.ae=''}else S.ae='Wrong passcode';shop('Armory')};
+window.adminBan=i=>{const e=NET.al[i];if(!e||!e.u)return;const u=esc2(e.u);BANS[u]=esc(e.n);if(NET.on&&NET.host){NET.ban[u]=esc(e.n);saveBans();netTick()}shop('Armory')};
+window.adminUnban=i=>{delete BANS[NET.au[i]];shop('Armory')};
+window.copyBans=()=>{const t=$('bt');t.select();try{navigator.clipboard.writeText(t.value)}catch(e){try{document.execCommand('copy')}catch(x){}}};
+const esc=t=>String(t||'…').replace(/[<>&"'`]/g,'').slice(0,14);
+function banArea(){if(!(NET.on&&NET.host))return '';const ps=others();NET.bl=ps.map(p=>({u:p.presence.u,n:p.presence.n}));NET.ul=Object.keys(NET.ban);
+const r=(n,b)=>`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px"><span>${esc(n)}</span>${b}</div>`;
+return `<div class="row" style="flex-direction:column;align-items:stretch"><b>🚫 Ban area</b><small>Banned players are removed from your game and cannot rejoin your rooms.</small>`
++(ps.length?ps.map((p,i)=>r(p.presence.n,`<button onclick="banP(${i})" ${p.presence.u?'':'disabled'}>Ban</button>`)).join(''):'<small style="margin-top:6px">No other players in the room.</small>')
++(NET.ul.length?'<small style="margin-top:12px">Banned list:</small>'+NET.ul.map((u,i)=>r(NET.ban[u],`<button onclick="unban(${i})">Unban</button>`)).join(''):'')+'</div>'}
+const saveBans=()=>{try{localStorage.setItem('dh_bans',JSON.stringify(NET.ban))}catch(e){}};
+window.banP=i=>{const e=NET.bl[i];if(!e||!e.u||!NET.host)return;NET.ban[e.u]=esc(e.n);saveBans();shop('Armory');netTick()};
+window.unban=i=>{const u=NET.ul[i];if(u){delete NET.ban[u];saveBans();shop('Armory');netTick()}};
 function teamModeRow(){const lock=NET.on&&!NET.host;return `<div class="row"><span><b>👥 Team mode</b><br><small>${S.tmode?'ON — host assigns teams, teammates cannot hurt each other, map shows only teammates':'OFF — everyone plays on their own'}${lock?' · set by host':''}</small></span><button onclick="togTeam()" ${lock?'disabled':''}>${S.tmode?'Turn OFF':'Turn ON'}</button></div>`}
 window.togTeam=()=>{if(NET.on&&!NET.host)return;S.tmode=S.tmode?0:1;shop('Armory');if(NET.on)netTick()};
 function pvpRow(){const lock=NET.on&&!NET.host;return `<div class="row"><span><b>⚔ Shoot players (PvP)</b><br><small>${S.pvp?'ON — you can shoot other players':'OFF — only zombies take damage'}${lock?' · set by host':''}</small></span><button onclick="togPvp()" ${lock?'disabled':''}>${S.pvp?'Turn OFF':'Turn ON'}</button></div>`}
@@ -229,15 +259,15 @@ function lbl(t,col){const c=document.createElement('canvas');c.width=256;c.heigh
 function mkP(){const g=new THREE.Group(),M=(c)=>new THREE.MeshStandardMaterial({color:c,roughness:.8}),a=(geo,m,x,y,z)=>{const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);g.add(o)};
 a(new THREE.BoxGeometry(.5,.75,.3),M(0x2d5a8a),0,1.15,0);a(new THREE.SphereGeometry(.16,10,8),M(0xc9a27e),0,1.72,0);a(new THREE.BoxGeometry(.4,.8,.28),M(0x222222),0,.4,0);a(new THREE.BoxGeometry(.06,.08,.6),M(0x111111),.25,1.3,.35);g.userData={n:'',l:null};return g}
 function netTick(){if(NET.on)for(const p of others()){const d=p.presence.pd&&p.presence.pd[myPeer()],L=NET.lpd[p.peer]||0;if(d>L){NET.lpd[p.peer]=d;if(!(S.tmode&&teamOf(p.peer)===myTeam()))pvpHurt(d-L,p.presence.n)}}
-const o={pd:NET.pd,n:NET.n,x:r2(cam.position.x),z:r2(cam.position.z),y:r2(yaw),w:S.cur,h:Math.ceil(S.hp),d:(S.state=='spec'||S.state=='dead')?1:0};
-if(NET.host){o.H=1;o.tmo=S.tmode?1:0;o.pvp=S.pvp?1:0;for(const p of NET.room.peers())if(p.kind=='viewer'&&NET.tm[p.peer]==null)NET.tm[p.peer]=Object.keys(NET.tm).length%4;o.tm=NET.tm;o.wv=S.wave;o.ph=S.state=='shop'?'shop':S.state=='dead'?'over':'play';o.q=Z.length+S.queue;o.kp=NET.kp;o.kx=NET.kx;o.Z=[];for(const z of Z){const u=z.userData;o.Z.push(u.id,Math.round(z.position.x*10),Math.round(z.position.z*10),Math.round(u.hp),Math.round(z.rotation.y*100))}
+const o={u:MYID,pd:NET.pd,n:NET.n,x:r2(cam.position.x),z:r2(cam.position.z),y:r2(yaw),w:S.cur,h:Math.ceil(S.hp),d:(S.state=='spec'||S.state=='dead')?1:0};
+if(NET.host){o.H=1;o.bn=Object.keys(NET.ban);o.tmo=S.tmode?1:0;o.pvp=S.pvp?1:0;for(const p of NET.room.peers())if(p.kind=='viewer'&&NET.tm[p.peer]==null)NET.tm[p.peer]=Object.keys(NET.tm).length%4;o.tm=NET.tm;o.wv=S.wave;o.ph=S.state=='shop'?'shop':S.state=='dead'?'over':'play';o.q=Z.length+S.queue;o.kp=NET.kp;o.kx=NET.kx;o.Z=[];for(const z of Z){const u=z.userData;o.Z.push(u.id,Math.round(z.position.x*10),Math.round(z.position.z*10),Math.round(u.hp),Math.round(z.rotation.y*100))}
 if(S.state=='spec'&&!others().some(p=>!p.presence.d))over()}else o.dm=NET.dm;
 try{NET.room.presence(o).catch(()=>{})}catch(e){}}
 function unreg(z){const i=Z.indexOf(z);if(i>=0)Z.splice(i,1);for(let j=zm.length-1;j>=0;j--)if(zm[j].userData.z===z)zm.splice(j,1)}
 function hostDmg(){for(const p of others()){const dm=p.presence.dm;if(!dm)continue;const L=NET.last[p.peer]=NET.last[p.peer]||{};for(const id in dm){const t=dm[id][0],hs=dm[id][1],pv=L[id]||0;if(t>pv){L[id]=t;const z=Z.find(q=>q.userData.id==id);if(z&&!z.userData.dead){const u=z.userData;u.hp-=t-pv;u.pd=.15;if(hs)u.hs=1;if(u.hp<=0)killZ(z,u.hs,p.peer)}}}}}
 function guestSync(dt){const h=NET.room.peers().find(p=>p.presence.H);
 if(!h){NET.nh+=dt;if(NET.nh>5)mpLeave('No host found for that code (or the host left).');return}NET.nh=0;
-const pr=h.presence;NET.q=pr.q||0;S.pvp=pr.pvp?1:0;S.tmode=pr.tmo?1:0;{const k=JSON.stringify([pr.tm||{},pr.tmo||0]);if(k!==NET.tmk){NET.tmk=k;if(S.state=='shop')shop('Armory')}}
+const pr=h.presence;if(pr.bn&&pr.bn.includes(MYID)){mpLeave('You were banned by the host.');return}NET.q=pr.q||0;S.pvp=pr.pvp?1:0;S.tmode=pr.tmo?1:0;{const k=JSON.stringify([pr.tm||{},pr.tmo||0]);if(k!==NET.tmk){NET.tmk=k;if(S.state=='shop')shop('Armory')}}
 if(pr.ph=='over'&&S.state!='dead'){over();return}
 if(pr.ph=='shop'&&(S.state=='play'||S.state=='spec')){S.hp=S.hp<=0?50:Math.min(100,S.hp+20);shop('Wave '+pr.wv+' survived!')}
 else if(pr.ph=='play'&&S.state=='shop'){S.wave=pr.wv;if(S.hp<=0)S.hp=50;S.state='play';$('ov').style.display='none';buildW();msg('WAVE '+S.wave)}
