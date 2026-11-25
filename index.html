@@ -209,7 +209,7 @@ window.setTeam=(id,i)=>{if(!NET.host)return;NET.tm[id]=i;shop('Armory');netTick(
 let MYID='';try{MYID=localStorage.getItem('dh_uid')||'';if(!MYID){MYID=Math.random().toString(36).slice(2,12)+Date.now().toString(36);localStorage.setItem('dh_uid',MYID)}}catch(e){MYID=Math.random().toString(36).slice(2,14)}
 // Owner permanent bans: edit BANNED here and/or bans.json next to this file ({"playerId":"name"})
 const BANNED={};
-const ADMIN_PASS='changeme';
+const ADMIN_PASS='Vivaanc235_bear60';
 const BANS=Object.assign({},BANNED);
 function banScreen(){S.state='banned';md=0;try{document.exitPointerLock()}catch(e){}const o=$('ov');o.style.display='flex';o.innerHTML='<h1>BANNED</h1><div style="font-size:22px;max-width:520px;text-align:center">You have been permanently banned from this game by its creator.</div>'}
 try{fetch('bans.json?'+Date.now()).then(r=>r.ok?r.json():{}).then(j=>{if(Array.isArray(j))j=Object.fromEntries(j.map(u=>[u,'']));for(const k in j)BANS[k]=String(j[k]||'');if(BANS[MYID])banScreen()}).catch(()=>{})}catch(e){}
