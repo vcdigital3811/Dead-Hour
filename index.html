@@ -97,6 +97,7 @@ wm.position.set(.22,-.2,-.45);wg.add(wm)}
 const Z=[],zm=[],parts=[];
 const skins=[0x7d8f6a,0x8a927a,0x6f7f66,0x91987f],cl=[0x3a3f52,0x4d3b2a,0x2b3a2f,0x5a5a5a,0x3d2a2a];
 const bl=new THREE.MeshLambertMaterial({color:0x5a0a0a});
+const HBM=new THREE.MeshBasicMaterial({visible:false});
 const _gc={},_mc={},GB=(...a)=>_gc['b'+a]||(_gc['b'+a]=new THREE.BoxGeometry(...a)),GS=(...a)=>_gc['s'+a]||(_gc['s'+a]=new THREE.SphereGeometry(...a)),LM=c=>_mc['l'+c]||(_mc['l'+c]=new THREE.MeshLambertMaterial({color:c})),BM=c=>_mc['b'+c]||(_mc['b'+c]=new THREE.MeshBasicMaterial({color:c}));
 function mkZ(){const g=new THREE.Group(),sk=LM(skins[Math.random()*4|0]),c1=LM(cl[Math.random()*5|0]),c2=LM(cl[Math.random()*5|0]);
 const sz=.92+Math.random()*.2;
@@ -104,7 +105,7 @@ const add=(geo,mat,x,y,z,p)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y
 add(GB(.5,.7,.28),c1,0,1.2,0);
 add(GB(.3,.35,.05),bl,.05,1.25,.15);
 add(GB(.5,.12,.29),c1,0,.83,0);
-const hd=add(GS(.16,12,10),sk,0,1.72,.03);hd.scale.set(1,1.15,1);hd.userData.head=1;
+const hd=add(GS(.16,12,10),sk,0,1.72,.03);hd.scale.set(1,1.15,1);hd.userData.head=1;const hb=add(GS(.22,8,6),HBM,0,1.74,.03);hb.scale.set(1,1.1,1);hb.userData.head=1;
 add(GB(.11,.08,.1),sk,0,1.53,0);
 const eg=BM(0xff2a1a);add(GS(.028,6,6),eg,-.06,1.74,.17);add(GS(.028,6,6),eg,.06,1.74,.17);
 add(GB(.1,.04,.04),BM(0x220000),0,1.65,.16);
@@ -138,7 +139,7 @@ const rc=new THREE.Raycaster();
 function fire(){const w=WP[S.cur],a=S.am[S.cur];if(S.rl||S.cd>0)return;if(a.m<=0){reload();return}
 a.m--;S.run.s[S.cur]=(S.run.s[S.cur]||0)+1;S.cd=w.r;S.kick=.08+w.l*.06;pit+=.004*w.l*3;mf.intensity=3;snd(w.l>.6?900:1800,.25,.6);
 for(let p=0;p<w.pel;p++){rc.setFromCamera({x:(Math.random()-.5)*w.sp*4,y:(Math.random()-.5)*w.sp*4},cam);rc.far=120;
-const h=rc.intersectObjects(zm,false)[0];if(S.pvp&&NET.on){const q=rc.intersectObjects(pmeshes(),false)[0];if(q&&(!h||q.distance<h.distance)){pvpHit(q,w);continue}}if(h){const z=h.object.userData.z,hs=!!h.object.userData.head,u=z.userData;if(u.dead)continue;const dm=w.d*(hs?2.5:1);blood(h.point,hs?8:4);if(NET.on&&!NET.host){const o=NET.dm[u.id]||[0,0];NET.dm[u.id]=[Math.round(o[0]+dm),(o[1]||hs)?1:0]}else{u.hp-=dm;u.pd=.15;if(u.hp<=0)killZ(z,hs)}}}
+const h=rc.intersectObjects(zm,false)[0];if(S.pvp&&NET.on){const q=rc.intersectObjects(pmeshes(),false)[0];if(q&&(!h||q.distance<h.distance)){pvpHit(q,w);continue}}if(h){const z=h.object.userData.z,hs=!!h.object.userData.head,u=z.userData;if(u.dead)continue;if(hs){const cr=$('cross');cr.style.borderColor='#ff3030';setTimeout(()=>cr.style.borderColor='',140)}const dm=w.d*(hs?2.5:1);blood(h.point,hs?8:4);if(NET.on&&!NET.host){const o=NET.dm[u.id]||[0,0];NET.dm[u.id]=[Math.round(o[0]+dm),(o[1]||hs)?1:0]}else{u.hp-=dm;u.pd=.15;if(u.hp<=0)killZ(z,hs)}}}
 if(a.m<=0)reload()}
 // game flow
 function startWave(){if(NET.on&&!NET.host)return;try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();ac.resume()}catch(e){}S.wave++;if(S.wave==1)S.run={e:0,k:0,s:{}};S.tanks=S.wave%5?0:Math.min(1+Math.floor(S.wave/25),5);S.queue=Math.round((6+S.wave*3)*(1+.7*others().length))+S.tanks;S.sp=0;S.state='play';$('ov').style.display='none';buildW();msg('WAVE '+S.wave+(S.tanks?' — TANK ZOMBIE!':''));try{R.domElement.requestPointerLock()}catch(e){}}
