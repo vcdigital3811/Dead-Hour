@@ -126,7 +126,7 @@ let ac;function snd(f,d,v){try{ac=ac||new (window.AudioContext||window.webkitAud
 const s=ac.createBufferSource(),fi=ac.createBiquadFilter(),g=ac.createGain();fi.type='lowpass';fi.frequency.value=f;g.gain.value=v;s.buffer=b;s.connect(fi);fi.connect(g);g.connect(ac.destination);s.start()}catch(e){}}
 // input
 const K={};let md=0,yaw=0,pit=0;
-addEventListener('keydown',e=>{K[e.code]=1;if(S.state=='play'){if(/^Digit\d$/.test(e.code)){const o=ORD.filter(i=>S.own[i]),k=(+e.code.slice(5)+9)%10;if(o[k]!=null)eq(o[k])};if(e.code=='KeyR')reload();if(e.code=='KeyE')useBlast()}});
+addEventListener('keydown',e=>{K[e.code]=1;if(S.state=='play'){if(/^Digit\d$/.test(e.code)){const o=ORD.filter(i=>S.own[i]),k=(+e.code.slice(5)+9)%10;if(o[k]!=null)eq(o[k])};if(e.code=='KeyR')reload();if(e.code=='KeyE')useBlast();if(e.code=='ArrowLeft'||e.code=='ArrowUp'){e.preventDefault();cycle(-1)}if(e.code=='ArrowRight'||e.code=='ArrowDown'){e.preventDefault();cycle(1)}}});
 addEventListener('keyup',e=>K[e.code]=0);
 addEventListener('mousedown',e=>{if(S.state=='play'){md=1;if(!document.pointerLockElement)try{R.domElement.requestPointerLock()}catch(x){}}});
 addEventListener('mouseup',()=>md=0);
@@ -141,14 +141,14 @@ for(let p=0;p<w.pel;p++){rc.setFromCamera({x:(Math.random()-.5)*w.sp*4,y:(Math.r
 const h=rc.intersectObjects(zm,false)[0];if(S.pvp&&NET.on){const q=rc.intersectObjects(pmeshes(),false)[0];if(q&&(!h||q.distance<h.distance)){pvpHit(q,w);continue}}if(h){const z=h.object.userData.z,hs=!!h.object.userData.head,u=z.userData;if(u.dead)continue;const dm=w.d*(hs?2.5:1);blood(h.point,hs?8:4);if(NET.on&&!NET.host){const o=NET.dm[u.id]||[0,0];NET.dm[u.id]=[Math.round(o[0]+dm),(o[1]||hs)?1:0]}else{u.hp-=dm;u.pd=.15;if(u.hp<=0)killZ(z,hs)}}}
 if(a.m<=0)reload()}
 // game flow
-function startWave(){if(NET.on&&!NET.host)return;try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();ac.resume()}catch(e){}S.wave++;if(S.wave==1)S.run={e:0,k:0,s:{}};S.tanks=Math.floor(S.wave/5);S.queue=Math.round((6+S.wave*3)*(1+.7*others().length))+S.tanks;S.sp=0;S.state='play';$('ov').style.display='none';buildW();msg('WAVE '+S.wave+(S.tanks?' — TANK ZOMBIE!':''));try{R.domElement.requestPointerLock()}catch(e){}}
+function startWave(){if(NET.on&&!NET.host)return;try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();ac.resume()}catch(e){}S.wave++;if(S.wave==1)S.run={e:0,k:0,s:{}};S.tanks=S.wave%5?0:Math.min(1+Math.floor(S.wave/25),5);S.queue=Math.round((6+S.wave*3)*(1+.7*others().length))+S.tanks;S.sp=0;S.state='play';$('ov').style.display='none';buildW();msg('WAVE '+S.wave+(S.tanks?' — TANK ZOMBIE!':''));try{R.domElement.requestPointerLock()}catch(e){}}
 function msg(t){$('msg').textContent=t;setTimeout(()=>$('msg').textContent='',2200)}
 function shop(title){if(BANS[MYID]){banScreen();return}save();S.state='shop';md=0;try{document.exitPointerLock()}catch(e){}const o=$('ov');o.style.display='flex';
 let h=`<h1>DEAD HOUR</h1><div style="font-size:22px;margin-bottom:8px">${title}</div><div style="color:#e6c34a;font-size:24px;margin-bottom:8px">Points: ${S.pts}</div>`;
 h+=mpPanel();ORD.forEach(i=>{const w=WP[i],own=S.own[i],a=S.am[i];h+=`<div class="row"><span><b>${w.n}</b><br><small>DMG ${w.d}${w.pel>1?'x'+w.pel:''} · Mag ${w.mag} · ${own?`Ammo ${a.m}/${a.r}`:''}</small></span>`+
 (own?`<span><button onclick="ammo(${i})" ${S.pts<150||a.r>=w.res*2?'disabled':''}>Ammo +${w.res} (150)</button> <button onclick="eqs(${i})" ${S.cur==i?'disabled':''}>${S.cur==i?'Equipped':'Equip'}</button></span>`:`<button onclick="buy(${i})" ${S.pts<w.p?'disabled':''}>Buy (${w.p})</button>`)+'</div>'});
 h+=extraRows();h+=`<div class="row"><span><b>Medical Kit</b><br><small>Health ${Math.round(S.hp)}/100</small></span><button onclick="heal()" ${S.pts<300||S.hp>=100?'disabled':''}>Heal (300)</button></div>`;
-h+=`${NET.on&&!NET.host?'<div style="margin-top:14px;font-size:20px">Waiting for the host to start…</div>':'<button class="big" onclick="startWave()">'+(S.wave?'Start Wave '+(S.wave+1):(NET.on?'Start Co-op Game':'Begin — Wave 1'))+'</button>'}<small style="margin-top:10px">WASD move · Shift sprint · Mouse aim/shoot (hold to auto) · R reload · 1-9,0 pick owned guns · PvP toggle on the home screen · Headshots 2.5x · Touch: left stick moves, drag right side to aim, FIRE button</small><small style="margin:14px 0;cursor:pointer;text-decoration:underline" onclick="ownerLogin()">Owner</small>${adminArea()}`;o.innerHTML=h}
+h+=`${NET.on&&!NET.host?'<div style="margin-top:14px;font-size:20px">Waiting for the host to start…</div>':'<button class="big" onclick="startWave()">'+(S.wave?'Start Wave '+(S.wave+1):(NET.on?'Start Co-op Game':'Begin — Wave 1'))+'</button>'}<small style="margin-top:10px">WASD move · Shift sprint · Mouse aim/shoot (hold to auto) · R reload · 1-9,0 pick guns · Arrow keys or mouse wheel cycle through ALL your guns · PvP toggle on the home screen · Headshots 2.5x · Touch: left stick moves, drag right side to aim, FIRE button</small><small style="margin:14px 0;cursor:pointer;text-decoration:underline" onclick="ownerLogin()">Owner</small>${adminArea()}`;o.innerHTML=h}
 window.buy=i=>{if(S.pts>=WP[i].p){S.pts-=WP[i].p;S.own[i]=1;S.cur=i;shop('Armory')}};
 window.eqs=i=>{S.cur=i;shop('Armory')};window.ammo=i=>{S.pts-=150;S.am[i].r+=WP[i].res;shop('Armory')};window.heal=()=>{S.pts-=300;S.hp=100;shop('Armory')};window.startWave=startWave;
 function over(){save();S.state='dead';md=0;try{document.exitPointerLock()}catch(e){}const o=$('ov');o.style.display='flex';
@@ -166,6 +166,9 @@ const je=e=>{for(const t of e.changedTouches)if(t.identifier==jt){jt=null;JX=JY=
 lz.addEventListener('touchstart',e=>{e.preventDefault();const t=e.changedTouches[0];lt=t.identifier;lx=t.clientX;ly=t.clientY},po);
 lz.addEventListener('touchmove',e=>{e.preventDefault();for(const t of e.changedTouches)if(t.identifier==lt){yaw-=(t.clientX-lx)*.006;pit=Math.max(-1.4,Math.min(1.4,pit-(t.clientY-ly)*.006));lx=t.clientX;ly=t.clientY}},po);
 lz.addEventListener('touchend',()=>lt=null);
+// switch through every owned gun: Q / F keys or mouse wheel
+function cycle(d){const o=ORD.filter(i=>S.own[i]);if(o.length>1)eq(o[(o.indexOf(S.cur)+d+o.length)%o.length])}
+let _wt=0;addEventListener('wheel',e=>{if(S.state!='play')return;e.preventDefault();const n=performance.now();if(n-_wt<150)return;_wt=n;cycle(e.deltaY>0?1:-1)},{passive:false});
 // blast + chest
 const R_B=14,fx=[],el=new THREE.PointLight(0x66aaff,0,45);cam.add(el);
 function addXp(n){S.xp+=n;while(S.xp>=100){S.xp-=100;S.chests++;msg('🎁 Chest unlocked — open it in the Armory')}}
@@ -213,7 +216,7 @@ window.setTeam=(id,i)=>{if(!NET.host)return;NET.tm[id]=i;shop('Armory');netTick(
 let MYID='';try{MYID=localStorage.getItem('dh_uid')||'';if(!MYID){MYID=Math.random().toString(36).slice(2,12)+Date.now().toString(36);localStorage.setItem('dh_uid',MYID)}}catch(e){MYID=Math.random().toString(36).slice(2,14)}
 // Owner permanent bans: edit BANNED here and/or bans.json next to this file ({"playerId":"name"})
 const BANNED={};
-const ADMIN_PASS='Vivaanc235_bear60';
+const ADMIN_PASS='changeme';
 const BANS=Object.assign({},BANNED);
 function banScreen(){S.state='banned';md=0;try{document.exitPointerLock()}catch(e){}const o=$('ov');o.style.display='flex';o.innerHTML='<h1>BANNED</h1><div style="font-size:22px;max-width:520px;text-align:center">You have been permanently banned from this game by its creator.</div>'}
 try{fetch('bans.json?'+Date.now()).then(r=>r.ok?r.json():{}).then(j=>{if(Array.isArray(j))j=Object.fromEntries(j.map(u=>[u,'']));for(const k in j)BANS[k]=String(j[k]||'');if(BANS[MYID])banScreen()}).catch(()=>{})}catch(e){}
@@ -284,7 +287,7 @@ for(const id in NET.zmap)if(!seen[id]){const z=NET.zmap[id];delete NET.zmap[id];
 const kx=(pr.kx||{})[myPeer()]||0;if(kx>NET.lx){addXp(kx-NET.lx);NET.lx=kx}const kc=(pr.kc||{})[myPeer()]||0;if(kc>NET.lc){S.run.k+=kc-NET.lc;NET.lc=kc}const k=(pr.kp||{})[myPeer()];if(k>NET.lk){S.pts+=k-NET.lk;S.run.e+=k-NET.lk;NET.lk=k}}
 function syncPlayers(dt){const seen={};for(const p of others()){const pr=p.presence;if(pr.x==null)continue;seen[p.peer]=1;let m=NET.pm[p.peer];if(!m){m=NET.pm[p.peer]=mkP();m.position.set(pr.x,0,pr.z);sc.add(m)}const k=Math.min(1,dt*10);m.position.x+=(pr.x-m.position.x)*k;m.position.z+=(pr.z-m.position.z)*k;m.rotation.y=pr.y+Math.PI;m.visible=!pr.d;const tc=S.tmode?teamOf(p.peer):-1;if(m.userData.n!==pr.n||m.userData.tc!==tc){if(m.userData.l)m.remove(m.userData.l);m.userData.l=lbl(String(pr.n||'Player'),tc<0?0xffffff:TC[tc]);m.add(m.userData.l);m.userData.n=pr.n;m.userData.tc=tc;m.children[0].material.color.setHex(tc<0?0x2d5a8a:TC[tc])}}
 for(const id in NET.pm)if(!seen[id]){sc.remove(NET.pm[id]);delete NET.pm[id]}}
-function hurt(m){S.hp-=(6+S.wave*1.5)*(m||1);const e=$('dmg');e.style.opacity=1;setTimeout(()=>e.style.opacity=0,200);snd(500,.15,.5);if(S.hp<=0){S.hp=0;if(NET.on){S.state='spec';md=0;msg('You are down — spectating until the wave ends')}else over()}}
+function hurt(m){S.hp-=Math.min(6+S.wave*1.5,35)*(m||1);const e=$('dmg');e.style.opacity=1;setTimeout(()=>e.style.opacity=0,200);snd(500,.15,.5);if(S.hp<=0){S.hp=0;if(NET.on){S.state='spec';md=0;msg('You are down — spectating until the wave ends')}else over()}}
 function waveEnd(){const b=50*S.wave;S.pts+=b;S.run.e+=b;for(const p of others())NET.kp[p.peer]=(NET.kp[p.peer]||0)+b;S.state='x';setTimeout(()=>{S.hp=S.hp<=0?50:Math.min(100,S.hp+20);shop(`Wave ${S.wave} survived! +${b} bonus`)},1200)}
 // map + zombie sounds
 let MB=0,mbs=0,lastG=0;const mm=document.getElementById('mm'),mc=mm.getContext('2d');
@@ -333,7 +336,7 @@ else{let bd=1e9,bx=0,bz=0;for(const q of tg){const d=Math.hypot(q[0]-z.position.
 if(u.pd>0)u.pd-=dt;if(bd<1e9){z.rotation.y=Math.atan2(bx-z.position.x,bz-z.position.z);if(bd>(u.tank?2:1.1)){const s=u.spd*(u.pd>0?.3:1)*dt;z.position.x+=(bx-z.position.x)/bd*s;z.position.z+=(bz-z.position.z)/bd*s}else mv=0}else mv=0}
 if(mv){u.ph+=dt*u.spd*4;const sw=Math.sin(u.ph)*.6;u.lL.rotation.x=sw;u.lR.rotation.x=-sw;u.aL.rotation.x=-1.45+Math.sin(u.ph*.5)*.15;z.rotation.z=Math.sin(u.ph*.5)*.06}else u.aL.rotation.x=-1.5+Math.sin(T*10)*.3;
 if((u.gn=(u.gn===undefined?Math.random()*5:u.gn)-dt)<0){u.gn=4+Math.random()*6;groan(z,0)}
-if(S.state=='play'){const d=Math.hypot(cam.position.x-z.position.x,cam.position.z-z.position.z);if(d<(u.tank?2.3:1.2)){u.atk-=dt;if(u.atk<=0){u.atk=1;hurt(u.tank?3:1);groan(z,1)}}else u.atk=Math.min(u.atk,.5)}}
+if(S.state=='play'){const d=Math.hypot(cam.position.x-z.position.x,cam.position.z-z.position.z);if(d<(u.tank?2.3:1.2)){u.atk-=dt;if(u.atk<=0){u.atk=1;hurt(u.tank?2:1);groan(z,1)}}else u.atk=Math.min(u.atk,.5)}}
 if(!g&&S.queue==0&&Z.length==0)waveEnd()}
 if(Z.dead)for(let i=Z.dead.length-1;i>=0;i--){const z=Z.dead[i],u=z.userData;u.t+=dt;z.rotation.x=Math.min(u.t*3,1.5)*-1;if(u.t>4){sc.remove(z);Z.dead.splice(i,1)}}
 for(let i=parts.length-1;i>=0;i--){const p=parts[i],u=p.userData;u.t-=dt;u.v.y-=9*dt;p.position.addScaledVector(u.v,dt);if(u.t<=0||p.position.y<0){sc.remove(p);parts.splice(i,1)}}
