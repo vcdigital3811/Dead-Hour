@@ -68,7 +68,21 @@ const WP=[
 {n:'M14 Marksman',p:3500,d:70,r:.2,mag:20,res:100,pel:1,sp:.006,rl:2.1,l:.85,auto:1},
 {n:'RPK Light MG',p:4800,d:42,r:.08,mag:75,res:225,pel:1,sp:.025,rl:3.5,l:.9,auto:1},
 {n:'PGM Hecate II',p:11000,d:620,r:1,mag:5,res:25,pel:1,sp:.0008,rl:2.8,l:1,auto:0},
-{n:'Railgun',p:15000,d:1000,r:1.1,mag:4,res:20,pel:1,sp:.0003,rl:3,l:1,auto:0}];
+{n:'Railgun',p:15000,d:1000,r:1.1,mag:4,res:20,pel:1,sp:.0003,rl:3,l:1,auto:0},
+{n:'Five-seveN',p:450,d:32,r:.18,mag:20,res:100,pel:1,sp:.008,rl:1.3,l:.35,auto:0},
+{n:'Beretta 93R',p:650,d:24,r:.07,mag:20,res:120,pel:1,sp:.03,rl:1.4,l:.4,auto:1},
+{n:'MP7',p:1350,d:24,r:.065,mag:40,res:200,pel:1,sp:.02,rl:1.7,l:.5,auto:1},
+{n:'Vector',p:1600,d:22,r:.045,mag:33,res:198,pel:1,sp:.03,rl:1.6,l:.5,auto:1},
+{n:'Golden Desert Eagle',p:1900,d:130,r:.5,mag:7,res:35,pel:1,sp:.005,rl:2,l:.45,auto:0},
+{n:'Benelli M4',p:2200,d:17,r:.25,mag:7,res:49,pel:8,sp:.065,rl:2.6,l:.75,auto:0},
+{n:'Kar98k',p:2700,d:110,r:.9,mag:5,res:35,pel:1,sp:.003,rl:2.8,l:.9,auto:0},
+{n:'AUG',p:3200,d:36,r:.08,mag:30,res:150,pel:1,sp:.01,rl:1.9,l:.8,auto:1},
+{n:'HK416',p:3600,d:38,r:.075,mag:30,res:150,pel:1,sp:.01,rl:1.8,l:.75,auto:1},
+{n:'AN-94',p:4000,d:42,r:.07,mag:30,res:150,pel:1,sp:.008,rl:1.9,l:.8,auto:1},
+{n:'Street Sweeper',p:4200,d:15,r:.2,mag:12,res:60,pel:8,sp:.07,rl:4,l:.8,auto:1},
+{n:'PKM',p:5800,d:50,r:.075,mag:100,res:300,pel:1,sp:.028,rl:4.5,l:.95,auto:1},
+{n:'Intervention',p:7500,d:300,r:.85,mag:6,res:30,pel:1,sp:.001,rl:2.7,l:1,auto:0},
+{n:'Obliterator',p:25000,d:2000,r:1.4,mag:3,res:12,pel:1,sp:.0002,rl:3.2,l:1,auto:0}];
 const ORD=WP.map((_,i)=>i).sort((a,b)=>WP[a].p-WP[b].p);
 const S0=()=>{try{return JSON.parse(localStorage.getItem('deadhour')||'null')}catch(e){return null}};
 const S={run:{e:0,k:0,s:{}},tmode:0,pvp:0,blast:0,xp:0,chests:0,bc:0,pts:0,hp:100,wave:0,cur:0,own:WP.map((_,i)=>i?0:1),am:WP.map(w=>({m:w.mag,r:w.res})),state:'shop',rl:0,cd:0,kick:0,queue:0,sp:0,kills:0};
@@ -114,7 +128,7 @@ const br=new THREE.Mesh(new THREE.CylinderGeometry(.017,.017,L*.6,8),m);br.rotat
 const gp=new THREE.Mesh(new THREE.BoxGeometry(.05,.13,.06),w.l>.5?wd:m);gp.position.set(0,-.09,-.05);gp.rotation.x=.3;wm.add(gp);
 if(w.l>.5){const st=new THREE.Mesh(new THREE.BoxGeometry(.05,.08,.25),wd);st.position.set(0,-.02,.12);wm.add(st)}
 const hand=new THREE.Mesh(new THREE.BoxGeometry(.07,.07,.12),new THREE.MeshStandardMaterial({color:0x8a6a55,roughness:.9}));hand.position.set(0,-.02,-.2);wm.add(hand);
-if(w.n=='Railgun'){const gl=new THREE.MeshBasicMaterial({color:0x58b8ff});[-.03,.03].forEach(x=>{const r=new THREE.Mesh(new THREE.BoxGeometry(.012,.012,L*1.5),gl);r.position.set(x,.035,-L);wm.add(r)})}
+if(w.n=='Railgun'||w.n=='Obliterator'){const gl=new THREE.MeshBasicMaterial({color:w.n=='Railgun'?0x58b8ff:0xff7a1a});[-.03,.03].forEach(x=>{const r=new THREE.Mesh(new THREE.BoxGeometry(.012,.012,L*1.5),gl);r.position.set(x,.035,-L);wm.add(r)})}
 wm.position.set(.22,-.2,-.45);wg.add(wm)}
 // zombies
 const Z=[],zm=[],parts=[];
