@@ -28,7 +28,7 @@ input{background:#111;color:#fff;border:1px solid #555}
 <div id="hud"><div id="wv"></div><div id="xp"></div><div id="scope"></div><div id="pts"></div><div id="hp"></div><div id="am"></div><div id="msg"></div><div id="cross"></div><div id="dmg"></div></div>
 <canvas id="mm" width="150" height="150" style="position:fixed;right:12px;top:48px;border:2px solid #fff4;border-radius:50%;pointer-events:auto;display:none"></canvas>
 <div id="tc"><div id="lz"></div><div id="jz"><div id="jb"><div id="jk"></div></div></div>
-<div id="bf" class="tb" style="right:24px;bottom:30px;width:100px;height:100px;font-size:18px">FIRE</div><div id="br" class="tb" style="right:140px;bottom:24px">RELOAD</div><div id="bs" class="tb" style="right:24px;bottom:150px">RUN</div><div id="bz" class="tb" style="right:24px;bottom:250px;font-size:26px">⚡</div><div id="bm" class="tb" style="right:140px;bottom:196px">MAP</div><div id="ba" class="tb" style="right:256px;bottom:46px">AIM</div><div id="bw" class="tb" style="right:140px;bottom:110px">SWAP</div></div>
+<div id="bf" class="tb" style="right:24px;bottom:30px;width:100px;height:100px;font-size:18px">FIRE</div><div id="br" class="tb" style="right:140px;bottom:24px">RELOAD</div><div id="bs" class="tb" style="right:24px;bottom:150px">RUN</div><div id="bz" class="tb" style="right:24px;bottom:250px;font-size:26px">⚡</div><div id="bm" class="tb" style="right:140px;bottom:196px">MAP</div><div id="ba" class="tb" style="right:256px;bottom:46px">AIM</div><div id="bh" class="tb" style="right:256px;bottom:130px;font-size:26px">🩹</div><div id="bw" class="tb" style="right:140px;bottom:110px">SWAP</div></div>
 <div id="ov"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
@@ -101,9 +101,9 @@ const WP=[
 {n:'Chainsaw',p:5000,d:40,r:.06,mag:999,res:0,pel:1,sp:0,rl:0,l:.3,auto:1,melee:1,range:2.6}];
 const ORD=WP.map((_,i)=>i).sort((a,b)=>WP[a].p-WP[b].p);
 const S0=()=>{try{return JSON.parse(localStorage.getItem('deadhour')||'null')}catch(e){return null}};
-const S={run:{e:0,k:0,s:{}},tmode:0,pvp:0,blast:0,xp:0,chests:0,bc:0,pts:0,hp:100,wave:0,cur:0,own:WP.map((_,i)=>i?0:1),am:WP.map(w=>({m:w.mag,r:w.res})),state:'shop',rl:0,cd:0,kick:0,queue:0,sp:0,kills:0};
-{const v=S0();if(v){S.pts=v.pts||0;if(v.own)S.own=WP.map((_,i)=>v.own[i]?1:0);if(v.am)S.am=WP.map((w,i)=>(v.am[i]&&v.am[i].m!=null)?v.am[i]:{m:w.mag,r:w.res});S.cur=S.own[v.cur]?v.cur:0;S.best=v.best||0;S.blast=v.bl||0;S.xp=v.xp||0;S.chests=v.ch||0}}
-function save(){try{localStorage.setItem('deadhour',JSON.stringify({bl:S.blast,xp:S.xp,ch:S.chests,pts:S.pts,own:S.own,am:S.am,cur:S.cur,best:Math.max(S.best||0,S.wave)}))}catch(e){}}
+const S={med:0,mc:0,run:{e:0,k:0,s:{}},tmode:0,pvp:0,blast:0,xp:0,chests:0,bc:0,pts:0,hp:100,wave:0,cur:0,own:WP.map((_,i)=>i?0:1),am:WP.map(w=>({m:w.mag,r:w.res})),state:'shop',rl:0,cd:0,kick:0,queue:0,sp:0,kills:0};
+{const v=S0();if(v){S.pts=v.pts||0;if(v.own)S.own=WP.map((_,i)=>v.own[i]?1:0);if(v.am)S.am=WP.map((w,i)=>(v.am[i]&&v.am[i].m!=null)?v.am[i]:{m:w.mag,r:w.res});S.cur=S.own[v.cur]?v.cur:0;S.best=v.best||0;S.blast=v.bl||0;S.xp=v.xp||0;S.chests=v.ch||0;S.med=v.mk||0}}
+function save(){try{localStorage.setItem('deadhour',JSON.stringify({mk:S.med,bl:S.blast,xp:S.xp,ch:S.chests,pts:S.pts,own:S.own,am:S.am,cur:S.cur,best:Math.max(S.best||0,S.wave)}))}catch(e){}}
 addEventListener('beforeunload',save);
 // scene
 const coarse=matchMedia('(pointer:coarse)').matches;const R=new THREE.WebGLRenderer({antialias:!coarse,powerPreference:'high-performance'});R.setSize(innerWidth,innerHeight);R.setPixelRatio(coarse?1:Math.min(devicePixelRatio,1.25));document.body.prepend(R.domElement);
@@ -190,7 +190,7 @@ let ac;function snd(f,d,v){try{ac=ac||new (window.AudioContext||window.webkitAud
 const s=ac.createBufferSource(),fi=ac.createBiquadFilter(),g=ac.createGain();fi.type='lowpass';fi.frequency.value=f;g.gain.value=v;s.buffer=b;s.connect(fi);fi.connect(g);g.connect(ac.destination);s.start()}catch(e){}}
 // input
 const K={};let md=0,yaw=0,pit=0;
-addEventListener('keydown',e=>{K[e.code]=1;if(S.state=='play'){if(/^Digit\d$/.test(e.code)){const o=ORD.filter(i=>S.own[i]),k=(+e.code.slice(5)+9)%10;if(o[k]!=null)eq(o[k])};if(e.code=='KeyR')reload();if(e.code=='KeyE')useBlast();if(e.code=='ArrowLeft'||e.code=='ArrowUp'){e.preventDefault();cycle(-1)}if(e.code=='ArrowRight'||e.code=='ArrowDown'){e.preventDefault();cycle(1)}}});
+addEventListener('keydown',e=>{K[e.code]=1;if(S.state=='play'){if(/^Digit\d$/.test(e.code)){const o=ORD.filter(i=>S.own[i]),k=(+e.code.slice(5)+9)%10;if(o[k]!=null)eq(o[k])};if(e.code=='KeyR')reload();if(e.code=='KeyE')useBlast();if(e.code=='KeyH')useMed();if(e.code=='ArrowLeft'||e.code=='ArrowUp'){e.preventDefault();cycle(-1)}if(e.code=='ArrowRight'||e.code=='ArrowDown'){e.preventDefault();cycle(1)}}});
 addEventListener('keyup',e=>K[e.code]=0);
 addEventListener('contextmenu',e=>{if(S.state=='play')e.preventDefault()});
 addEventListener('mousedown',e=>{if(e.button==2){if(S.state=='play')S.ads=1;return}if(S.state=='play'){md=1;if(!document.pointerLockElement)try{R.domElement.requestPointerLock()}catch(x){}}});
@@ -212,7 +212,7 @@ function shop(title){if(BANS[MYID]){banScreen();return}save();S.state='shop';md=
 let h=`<h1>DEAD HOUR</h1><div style="font-size:22px;margin-bottom:8px">${title}</div><div style="color:#e6c34a;font-size:24px;margin-bottom:8px">🪙 Coins: ${S.pts}</div>`;
 h+=mpPanel();ORD.forEach(i=>{const w=WP[i],own=S.own[i],a=S.am[i];h+=`<div class="row"><span><b>${w.n}</b><br><small>DMG ${w.d}${w.pel>1?'x'+w.pel:''} · ${w.melee?'Melee · range '+w.range+'m':'Mag '+w.mag} · ${own&&!w.melee?`Ammo ${a.m}/${a.r}`:''}</small></span>`+
 (own?`<span><button onclick="ammo(${i})" ${S.pts<150||a.r>=w.res*2?'disabled':''}>${w.melee?'No ammo needed':'Ammo +'+w.res+' (150)'}</button> <button onclick="eqs(${i})" ${S.cur==i?'disabled':''}>${S.cur==i?'Equipped':'Equip'}</button></span>`:`<button onclick="buy(${i})" ${S.pts<w.p?'disabled':''}>Buy (${w.p})</button>`)+'</div>'});
-h+=extraRows();h+=`<div class="row"><span><b>Medical Kit</b><br><small>Health ${Math.round(S.hp)}/100</small></span><button onclick="heal()" ${S.pts<300||S.hp>=100?'disabled':''}>Heal (300)</button></div>`;
+h+=extraRows();h+=`<div class="row"><span><b>Full Heal</b><br><small>Health ${Math.round(S.hp)}/100</small></span><button onclick="heal()" ${S.pts<300||S.hp>=100?'disabled':''}>Heal (300)</button></div>`;
 h+=`${NET.on&&!NET.host?'<div style="margin-top:14px;font-size:20px">Waiting for the host to start…</div>':'<button class="big" onclick="startWave()">'+(S.wave?'Start Wave '+(S.wave+1):(NET.on?'Start Co-op Game':'Begin — Wave 1'))+'</button>'}<small style="margin-top:10px">WASD move · Shift sprint · Mouse aim/shoot (hold to auto) · R reload · 1-9,0 pick guns · Arrow keys or mouse wheel cycle through ALL your guns · PvP toggle on the home screen · Headshots 2.5x · Touch: left stick moves, drag right side to aim, FIRE button · AIM button zooms (PC: hold right mouse)</small><small style="margin:14px 0;cursor:pointer;text-decoration:underline" onclick="ownerLogin()">Owner</small>${adminArea()}`;o.innerHTML=h}
 window.buy=i=>{if(S.pts>=WP[i].p){S.pts-=WP[i].p;S.own[i]=1;S.cur=i;shop('Armory')}};
 window.eqs=i=>{S.cur=i;shop('Armory')};window.ammo=i=>{S.pts-=150;S.am[i].r+=WP[i].res;shop('Armory')};window.heal=()=>{S.pts-=300;S.hp=100;shop('Armory')};window.startWave=startWave;
@@ -243,7 +243,9 @@ for(const z of Z.slice()){const u=z.userData;if(u.dead)continue;if(Math.hypot(z.
 const ln=new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(p.x,1.2,p.z),new THREE.Vector3(z.position.x,1.3,z.position.z)]),new THREE.LineBasicMaterial({color:0xbfe3ff,transparent:true}));sc.add(ln);fx.push({m:ln,t:0});
 blood(new THREE.Vector3(z.position.x,1.2,z.position.z),6);
 const bd=u.tank?400:9999;if(NET.on&&!NET.host){const o=NET.dm[u.id]||[0,0];NET.dm[u.id]=[o[0]+bd,o[1]]}else{u.hp-=bd;if(u.hp<=0)killZ(z,0)}}}
-function extraRows(){return `<div class="row"><span><b>⚡ Electric Blast</b><br><small>Kills every zombie within ${R_B}m · Owned: ${S.blast} · press E</small></span><button onclick="buyBlast()" ${S.pts<1000?'disabled':''}>Buy (1000)</button></div><div class="row"><span><b>🎁 Chest</b><br><small>XP ${S.xp}/100 · Chests: ${S.chests}</small></span><button onclick="openChest()" ${S.chests<1?'disabled':''}>Open</button></div>`}
+function useMed(){if(S.state!='play'||S.med<1||S.hp>=100||S.mc>0)return;S.med--;S.mc=.8;S.hp=Math.min(100,S.hp+50);snd(300,.2,.4);msg('🩹 +50 health')}
+window.buyMed=()=>{if(S.pts>=300){S.pts-=300;S.med++;shop('Armory')}};
+function extraRows(){return `<div class="row"><span><b>🩹 Med Kit</b><br><small>Heals 50 HP during a wave · Owned: ${S.med} · press H</small></span><button onclick="buyMed()" ${S.pts<300?'disabled':''}>Buy (300)</button></div>`+`<div class="row"><span><b>⚡ Electric Blast</b><br><small>Kills every zombie within ${R_B}m · Owned: ${S.blast} · press E</small></span><button onclick="buyBlast()" ${S.pts<1000?'disabled':''}>Buy (1000)</button></div><div class="row"><span><b>🎁 Chest</b><br><small>XP ${S.xp}/100 · Chests: ${S.chests}</small></span><button onclick="openChest()" ${S.chests<1?'disabled':''}>Open</button></div>`}
 window.buyBlast=()=>{if(S.pts>=1000){S.pts-=1000;S.blast++;shop('Armory')}};
 window.openChest=()=>{if(S.chests<1)return;S.chests--;const r=Math.random(),un=S.own.map((o,i)=>o?-1:i).filter(i=>i>=0);let m;
 if(r<.08&&un.length){const i=un[Math.random()*un.length|0];S.own[i]=1;m='a '+WP[i].n+'!'}
@@ -251,7 +253,7 @@ else if(r<.3){S.blast+=2;m='2 Electric Blasts'}
 else if(r<.55){for(let i=0;i<WP.length;i++)if(S.own[i])S.am[i].r+=WP[i].res;m='free ammo for all your weapons'}
 else{const p=Math.round((300+Math.random()*1200)/50)*50;S.pts+=p;S.run.e+=p;m=p+' coins'}
 shop('🎁 Chest: '+m)};
-tb('bz',()=>useBlast());tb('ba',()=>{if(S.state=='play')S.ads=!S.ads;$('ba').style.background=S.ads?'#2e7dd7cc':''});
+tb('bz',()=>useBlast());tb('bh',()=>useMed());tb('ba',()=>{if(S.state=='play')S.ads=!S.ads;$('ba').style.background=S.ads?'#2e7dd7cc':''});
 // multiplayer (co-op, host-authoritative, via room presence)
 const NET={ban:(()=>{try{return JSON.parse(localStorage.getItem('dh_bans')||'{}')}catch(e){return{}}})(),bl:[],ul:[],on:0,host:0,room:null,zid:0,kp:{},kx:{},lx:0,kc:{},lc:0,gf:{},lg:{},pd:{},lpd:{},tm:{},last:{},dm:{},zmap:{},pm:{},err:'',code:'',n:'',lk:0,hu:0,nh:0,q:0,t:0};
 // PeerJS transport: host-authoritative star network exposing the same small room API the game uses
@@ -396,7 +398,7 @@ if(mx||mz){const l=Math.max(1,Math.hypot(mx,mz));mx/=l;mz/=l;const c=Math.cos(ya
 for(const o of obs){const dx=cam.position.x-o.x,dz=cam.position.z-o.z,d=Math.hypot(dx,dz),m=o.r+.4;if(d<m){cam.position.x=o.x+dx/d*m;cam.position.z=o.z+dz/d*m}}
 const pd=Math.hypot(cam.position.x,cam.position.z);if(pd>70){cam.position.x*=70/pd;cam.position.z*=70/pd}
 cam.rotation.set(pit,yaw,0);
-S.cd-=dt;S.bc-=dt;if(S.rl>0){S.rl-=dt;wm.rotation.x=.6;if(S.rl<=0){const a=S.am[S.cur],w=WP[S.cur],n=Math.min(w.mag-a.m,a.r);a.m+=n;a.r-=n;S.rl=0;wm.rotation.x=0}}
+S.cd-=dt;S.bc-=dt;S.mc-=dt;if(S.rl>0){S.rl-=dt;wm.rotation.x=.6;if(S.rl<=0){const a=S.am[S.cur],w=WP[S.cur],n=Math.min(w.mag-a.m,a.r);a.m+=n;a.r-=n;S.rl=0;wm.rotation.x=0}}
 if(md&&(WP[S.cur].auto||!S.held)){fire();S.held=1}if(!md)S.held=0;
 S.kick*=.85;S.sw=(S.sw||0)*.82;if(wm&&WP[S.cur].melee)wm.rotation.x=-1.2*S.sw;wg.position.z=S.kick;mf.intensity*=.5;if(wm&&wm.userData.spin){const sp=wm.userData.spin;sp.v=Math.max(0,Math.min(30,sp.v+((md&&!S.rl)?60:-25)*dt));sp.g.rotation.z+=sp.v*dt}}
 {if(!pl)S.ads=0;adsK+=((pl&&S.ads?1:0)-adsK)*Math.min(1,dt*12);if(Math.abs(adsK-_ak)>.002||_aw!==S.cur){_ak=adsK;_aw=S.cur;const w=WP[S.cur],zz=w.melee?1:(w.d>=90&&w.sp<=.004)?3.2:1.5;cam.fov=72/(1+(zz-1)*adsK);cam.updateProjectionMatrix();wg.position.x=-.22*adsK;wg.position.y=.04*adsK;$('cross').style.transform=`scale(${1-.4*adsK})`;const sc2=zz>2&&adsK>.85;$('scope').style.display=sc2?'block':'none';if(wm)wm.visible=!sc2;$('ba').style.background=S.ads?'#2e7dd7cc':''}}
@@ -417,7 +419,7 @@ if(Z.dead)for(let i=Z.dead.length-1;i>=0;i--){const z=Z.dead[i],u=z.userData;u.t
 for(let i=parts.length-1;i>=0;i--){const p=parts[i],u=p.userData;u.t-=dt;u.v.y-=9*dt;p.position.addScaledVector(u.v,dt);if(u.t<=0||p.position.y<0){sc.remove(p);parts.splice(i,1)}}
 el.intensity*=.88;for(let i=fx.length-1;i>=0;i--){const f=fx[i];f.t+=dt;if(f.ring){const k=Math.min(1,f.t/.45);f.m.scale.setScalar(1+k*(R_B-1));f.m.material.opacity=.4*(1-k)}else f.m.material.opacity=Math.max(0,1-f.t/.25);if(f.t>(f.ring?.45:.25)){sc.remove(f.m);f.m.geometry.dispose();fx.splice(i,1)}}
 const tv=TD&&sim;if(tv!==tcv){tcv=tv;$('tc').style.display=tv?'block':'none'}
-const w=WP[S.cur],a=S.am[S.cur];$('hp').textContent=(NET.on&&S.tmode?TN[myTeam()]+' team · ':'')+'HEALTH '+Math.ceil(S.hp);$('hp').style.color=NET.on&&S.tmode?hex(TC[myTeam()]):'';$('xp').textContent=`⚡ Blasts ${S.blast} (E)   ·   XP ${S.xp}/100   ·   🎁 Chests ${S.chests}`;$('pts').textContent='🪙 COINS '+S.pts;$('wv').textContent='WAVE '+S.wave+'  ·  Zombies left: '+(g?NET.q:Z.length+S.queue)+(NET.on?'  ·  Room '+NET.code+' ('+(others().length+1)+' players)':'');$('am').textContent=S.state=='spec'?'DOWN — spectating':S.rl?'RELOADING…':`${w.n}  ${w.melee?'MELEE':a.m+' / '+a.r}`;
+const w=WP[S.cur],a=S.am[S.cur];$('hp').textContent=(NET.on&&S.tmode?TN[myTeam()]+' team · ':'')+'HEALTH '+Math.ceil(S.hp);$('hp').style.color=NET.on&&S.tmode?hex(TC[myTeam()]):'';$('xp').textContent=`⚡ Blasts ${S.blast} (E)   ·   XP ${S.xp}/100   ·   🎁 Chests ${S.chests}   ·   🩹 Med ${S.med} (H)`;$('pts').textContent='🪙 COINS '+S.pts;$('wv').textContent='WAVE '+S.wave+'  ·  Zombies left: '+(g?NET.q:Z.length+S.queue)+(NET.on?'  ·  Room '+NET.code+' ('+(others().length+1)+' players)':'');$('am').textContent=S.state=='spec'?'DOWN — spectating':S.rl?'RELOADING…':`${w.n}  ${w.melee?'MELEE':a.m+' / '+a.r}`;
 mm.style.display=sim?'block':'none';if(sim&&FR%3==0)drawMap();
 R.render(sc,cam)}
 {const d=Object.getOwnPropertyDescriptor(Node.prototype,'textContent');for(const id of['hp','xp','pts','wv','am']){const e=$(id);let v=null;Object.defineProperty(e,'textContent',{set(x){x=String(x);if(x!==v){v=x;d.set.call(e,x)}},get(){return v||''}})}}
